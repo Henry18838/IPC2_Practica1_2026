@@ -8,6 +8,8 @@ import com.ipc2.model.Sucursal;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 
 public class GestionProductosFrame extends JFrame {
@@ -18,6 +20,7 @@ public class GestionProductosFrame extends JFrame {
     private JComboBox<Sucursal> cbSucursal;
     private JCheckBox chkActivo;
     private JButton btnGuardar;
+    private JButton btnExportarCSV;
 
     private JTable tablaProductos;
     private DefaultTableModel modeloTabla;
@@ -52,9 +55,11 @@ public class GestionProductosFrame extends JFrame {
         panelFormulario.add(chkActivo);
 
         btnGuardar = new JButton("Guardar Producto");
+        btnExportarCSV = new JButton("Exportar CSV");
 
         JPanel panelBoton = new JPanel();
         panelBoton.add(btnGuardar);
+        panelBoton.add(btnExportarCSV);
 
         JPanel panelSuperior = new JPanel(new BorderLayout());
         panelSuperior.add(panelFormulario, BorderLayout.CENTER);
@@ -75,6 +80,7 @@ public class GestionProductosFrame extends JFrame {
         add(scrollPane, BorderLayout.CENTER);
 
         btnGuardar.addActionListener(e -> guardarProducto());
+        btnExportarCSV.addActionListener(e -> exportarCSV());
 
         cargarSucursales();
         cargarProductos();
@@ -144,6 +150,40 @@ public class GestionProductosFrame extends JFrame {
                     producto.isActivo() ? "Si" : "No",
                     producto.getIdSucursal()
             });
+        }
+    }
+
+    private void exportarCSV() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Guardar reporte CSV");
+
+        int seleccion = fileChooser.showSaveDialog(this);
+
+        if (seleccion == JFileChooser.APPROVE_OPTION) {
+            String rutaArchivo = fileChooser.getSelectedFile().getAbsolutePath();
+
+            if (!rutaArchivo.endsWith(".csv")) {
+                rutaArchivo += ".csv";
+            }
+
+            try (FileWriter writer = new FileWriter(rutaArchivo)) {
+                writer.append("ID,Nombre,Descripcion,Precio,Activo,Sucursal\n");
+
+                for (int i = 0; i < modeloTabla.getRowCount(); i++) {
+                    writer.append(modeloTabla.getValueAt(i, 0).toString()).append(",");
+                    writer.append(modeloTabla.getValueAt(i, 1).toString()).append(",");
+                    writer.append(modeloTabla.getValueAt(i, 2).toString()).append(",");
+                    writer.append(modeloTabla.getValueAt(i, 3).toString()).append(",");
+                    writer.append(modeloTabla.getValueAt(i, 4).toString()).append(",");
+                    writer.append(modeloTabla.getValueAt(i, 5).toString()).append("\n");
+                }
+
+                JOptionPane.showMessageDialog(this, "Reporte CSV exportado correctamente");
+
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error al exportar CSV");
+                e.printStackTrace();
+            }
         }
     }
 
