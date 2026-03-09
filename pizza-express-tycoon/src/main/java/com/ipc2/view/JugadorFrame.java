@@ -361,32 +361,43 @@ public class JugadorFrame extends JFrame {
         actualizarEtiquetas();
     }
 
-    private void finalizarPartidaEnBD(String mensaje) {
-        PartidaDAO partidaDAO = new PartidaDAO();
-        PuntajeDAO puntajeDAO = new PuntajeDAO();
-        NivelAlcanzadoDAO nivelDAO = new NivelAlcanzadoDAO();
+private void finalizarPartidaEnBD(String mensaje) {
+    PartidaDAO partidaDAO = new PartidaDAO();
+    PuntajeDAO puntajeDAO = new PuntajeDAO();
+    NivelAlcanzadoDAO nivelDAO = new NivelAlcanzadoDAO();
 
-        boolean partidaFinalizada = partidaDAO.finalizarPartida(idPartidaActual);
-        boolean puntajeGuardado = puntajeDAO.guardarPuntaje(
-                idPartidaActual,
+    boolean partidaFinalizada = partidaDAO.finalizarPartida(idPartidaActual);
+    boolean puntajeGuardado = puntajeDAO.guardarPuntaje(
+            idPartidaActual,
+            puntaje,
+            pedidosEntregados,
+            pedidosCancelados,
+            pedidosNoEntregados,
+            bonificaciones
+    );
+    boolean nivelGuardado = nivelDAO.guardarNivelAlcanzado(idPartidaActual, nivelActual);
+
+    if (partidaFinalizada && puntajeGuardado && nivelGuardado) {
+        JOptionPane.showMessageDialog(this, mensaje);
+
+        idPartidaActual = -1;
+        lblEstadoPartida.setText("Partida: No iniciada");
+        lblTiempoPartida.setText("Tiempo de partida: 180 s");
+
+        FinPartidaFrame finPartidaFrame = new FinPartidaFrame(
                 puntaje,
                 pedidosEntregados,
                 pedidosCancelados,
                 pedidosNoEntregados,
-                bonificaciones
+                bonificaciones,
+                nivelActual
         );
-        boolean nivelGuardado = nivelDAO.guardarNivelAlcanzado(idPartidaActual, nivelActual);
+        finPartidaFrame.setVisible(true);
 
-        if (partidaFinalizada && puntajeGuardado && nivelGuardado) {
-            JOptionPane.showMessageDialog(this,
-                    mensaje + "\nPuntaje final: " + puntaje + "\nNivel alcanzado: " + nivelActual);
-            idPartidaActual = -1;
-            lblEstadoPartida.setText("Partida: No iniciada");
-            lblTiempoPartida.setText("Tiempo de partida: 180 s");
-        } else {
-            JOptionPane.showMessageDialog(this, "Hubo un problema al finalizar la partida");
-        }
+    } else {
+        JOptionPane.showMessageDialog(this, "Hubo un problema al finalizar la partida");
     }
+}
 
     private void cerrarSesion() {
         if (timerPartida != null && timerPartida.isRunning()) {
