@@ -9,5 +9,4 @@ Tecnologías:
 - Maven
 - Git
 
-Henry Josue Argueta Champet
-202131261
+Henry Josue Argueta Champet - 202131261

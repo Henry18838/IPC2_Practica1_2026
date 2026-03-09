@@ -92,4 +92,42 @@ public class ProductoDAO {
 
         return listaProductos;
     }
+
+    public ArrayList<String[]> obtenerProductosConDetalle() {
+    ArrayList<String[]> listaProductos = new ArrayList<>();
+
+    String sql = """
+            SELECT p.id_producto,
+                   p.nombre,
+                   p.descripcion,
+                   p.precio,
+                   p.activo,
+                   s.nombre AS sucursal
+            FROM productos p
+            INNER JOIN sucursales s ON p.id_sucursal = s.id_sucursal
+            """;
+
+    try (Connection connection = DatabaseConnection.getConnection();
+         PreparedStatement statement = connection.prepareStatement(sql);
+         ResultSet resultSet = statement.executeQuery()) {
+
+        while (resultSet.next()) {
+            String[] fila = new String[6];
+            fila[0] = String.valueOf(resultSet.getInt("id_producto"));
+            fila[1] = resultSet.getString("nombre");
+            fila[2] = resultSet.getString("descripcion");
+            fila[3] = String.valueOf(resultSet.getDouble("precio"));
+            fila[4] = resultSet.getBoolean("activo") ? "Si" : "No";
+            fila[5] = resultSet.getString("sucursal");
+
+            listaProductos.add(fila);
+        }
+
+    } catch (SQLException e) {
+        System.out.println("Error al obtener productos con detalle");
+        e.printStackTrace();
+    }
+
+    return listaProductos;
+}
 }

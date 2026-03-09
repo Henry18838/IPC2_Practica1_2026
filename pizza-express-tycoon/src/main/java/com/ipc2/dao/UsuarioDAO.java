@@ -66,31 +66,42 @@ public class UsuarioDAO {
         }
     }
 
-    public ArrayList<Usuario> obtenerUsuarios() {
-        ArrayList<Usuario> listaUsuarios = new ArrayList<>();
-        String sql = "SELECT id_usuario, nombre_usuario, nombre_completo, id_rol, id_sucursal, activo FROM usuarios";
+  public ArrayList<String[]> obtenerUsuariosConDetalle() {
+    ArrayList<String[]> listaUsuarios = new ArrayList<>();
 
-        try (Connection connection = DatabaseConnection.getConnection();
-             PreparedStatement statement = connection.prepareStatement(sql);
-             ResultSet resultSet = statement.executeQuery()) {
+    String sql = """
+            SELECT u.id_usuario,
+                   u.nombre_usuario,
+                   u.nombre_completo,
+                   r.nombre AS rol,
+                   s.nombre AS sucursal,
+                   u.activo
+            FROM usuarios u
+            INNER JOIN roles r ON u.id_rol = r.id_rol
+            INNER JOIN sucursales s ON u.id_sucursal = s.id_sucursal
+            """;
 
-            while (resultSet.next()) {
-                Usuario usuario = new Usuario();
-                usuario.setIdUsuario(resultSet.getInt("id_usuario"));
-                usuario.setNombreUsuario(resultSet.getString("nombre_usuario"));
-                usuario.setNombreCompleto(resultSet.getString("nombre_completo"));
-                usuario.setIdRol(resultSet.getInt("id_rol"));
-                usuario.setIdSucursal(resultSet.getInt("id_sucursal"));
-                usuario.setActivo(resultSet.getBoolean("activo"));
+    try (Connection connection = DatabaseConnection.getConnection();
+         PreparedStatement statement = connection.prepareStatement(sql);
+         ResultSet resultSet = statement.executeQuery()) {
 
-                listaUsuarios.add(usuario);
-            }
+        while (resultSet.next()) {
+            String[] fila = new String[6];
+            fila[0] = String.valueOf(resultSet.getInt("id_usuario"));
+            fila[1] = resultSet.getString("nombre_usuario");
+            fila[2] = resultSet.getString("nombre_completo");
+            fila[3] = resultSet.getString("rol");
+            fila[4] = resultSet.getString("sucursal");
+            fila[5] = resultSet.getBoolean("activo") ? "Si" : "No";
 
-        } catch (SQLException e) {
-            System.out.println("Error al obtener usuarios");
-            e.printStackTrace();
+            listaUsuarios.add(fila);
         }
 
-        return listaUsuarios;
+    } catch (SQLException e) {
+        System.out.println("Error al obtener usuarios con detalle");
+        e.printStackTrace();
     }
+
+    return listaUsuarios;
+}
 }

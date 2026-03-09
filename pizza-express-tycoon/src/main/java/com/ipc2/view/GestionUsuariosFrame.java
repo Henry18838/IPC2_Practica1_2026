@@ -141,23 +141,16 @@ public class GestionUsuariosFrame extends JFrame {
         }
     }
 
-    private void cargarUsuarios() {
-        modeloTabla.setRowCount(0);
+   private void cargarUsuarios() {
+    modeloTabla.setRowCount(0);
 
-        UsuarioDAO usuarioDAO = new UsuarioDAO();
-        ArrayList<Usuario> listaUsuarios = usuarioDAO.obtenerUsuarios();
+    UsuarioDAO usuarioDAO = new UsuarioDAO();
+    ArrayList<String[]> listaUsuarios = usuarioDAO.obtenerUsuariosConDetalle();
 
-        for (Usuario usuario : listaUsuarios) {
-            modeloTabla.addRow(new Object[]{
-                    usuario.getIdUsuario(),
-                    usuario.getNombreUsuario(),
-                    usuario.getNombreCompleto(),
-                    usuario.getIdRol(),
-                    usuario.getIdSucursal(),
-                    usuario.isActivo() ? "Si" : "No"
-            });
-        }
+    for (String[] fila : listaUsuarios) {
+        modeloTabla.addRow(fila);
     }
+}
 
     private void limpiarCampos() {
         txtNombreCompleto.setText("");

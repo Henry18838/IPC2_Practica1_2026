@@ -136,22 +136,15 @@ public class GestionProductosFrame extends JFrame {
     }
 
     private void cargarProductos() {
-        modeloTabla.setRowCount(0);
+    modeloTabla.setRowCount(0);
 
-        ProductoDAO productoDAO = new ProductoDAO();
-        ArrayList<Producto> listaProductos = productoDAO.obtenerProductos();
+    ProductoDAO productoDAO = new ProductoDAO();
+    ArrayList<String[]> listaProductos = productoDAO.obtenerProductosConDetalle();
 
-        for (Producto producto : listaProductos) {
-            modeloTabla.addRow(new Object[]{
-                    producto.getIdProducto(),
-                    producto.getNombre(),
-                    producto.getDescripcion(),
-                    producto.getPrecio(),
-                    producto.isActivo() ? "Si" : "No",
-                    producto.getIdSucursal()
-            });
-        }
+    for (String[] fila : listaProductos) {
+        modeloTabla.addRow(fila);
     }
+}
 
     private void exportarCSV() {
         JFileChooser fileChooser = new JFileChooser();

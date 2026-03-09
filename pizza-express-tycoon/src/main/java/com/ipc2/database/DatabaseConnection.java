@@ -8,7 +8,7 @@ public class DatabaseConnection {
 
     private static final String URL = "jdbc:mysql://localhost:3306/pizza_express_tycoon";
     private static final String USER = "root";
-    private static final String PASSWORD = "champet2020"; // cambia si tu root tiene otra
+    private static final String PASSWORD = "champet2020"; 
 
     public static Connection getConnection() {
 
