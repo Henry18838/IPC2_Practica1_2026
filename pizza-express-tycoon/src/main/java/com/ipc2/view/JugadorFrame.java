@@ -9,6 +9,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Random;
 
 public class JugadorFrame extends JFrame {
 
@@ -19,15 +20,13 @@ public class JugadorFrame extends JFrame {
     private JLabel lblPuntaje;
     private JLabel lblNivel;
     private JLabel lblTiempoPartida;
+    private JLabel lblInfoPedidos;
 
     private JButton btnIniciarPartida;
-    private JButton btnGenerarPedido;
     private JButton btnAvanzarEstado;
     private JButton btnCancelarPedido;
     private JButton btnFinalizarPartida;
     private JButton btnCerrarSesion;
-
-    private JComboBox<Producto> cbProductos;
 
     private JTable tablaPedidos;
     private DefaultTableModel modeloTabla;
@@ -42,12 +41,18 @@ public class JugadorFrame extends JFrame {
     private int tiempoPartidaRestante = 180;
 
     private Timer timerPartida;
+    private Timer timerGeneracionPedidos;
+
+    private final Random random = new Random();
+
+    private static final int MAX_PEDIDOS_ACTIVOS = 5;
+    private static final int INTERVALO_GENERACION_MS = 8000;
 
     public JugadorFrame(Usuario usuario) {
         this.usuario = usuario;
 
         setTitle("Modo Jugador");
-        setSize(1050, 550);
+        setSize(1100, 550);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
@@ -59,35 +64,32 @@ public class JugadorFrame extends JFrame {
         lblPuntaje = new JLabel("Puntaje: 0");
         lblNivel = new JLabel("Nivel: 1");
         lblTiempoPartida = new JLabel("Tiempo de partida: 180 s");
+        lblInfoPedidos = new JLabel("Pedidos automáticos activados");
 
         panelSuperior.add(lblBienvenida);
         panelSuperior.add(lblEstadoPartida);
         panelSuperior.add(lblPuntaje);
         panelSuperior.add(lblNivel);
         panelSuperior.add(lblTiempoPartida);
+        panelSuperior.add(lblInfoPedidos);
 
         add(panelSuperior, BorderLayout.NORTH);
 
-        JPanel panelCentroArriba = new JPanel(new FlowLayout());
+        JPanel panelBotones = new JPanel(new FlowLayout());
 
         btnIniciarPartida = new JButton("Iniciar Partida");
-        cbProductos = new JComboBox<>();
-        btnGenerarPedido = new JButton("Generar Pedido");
         btnAvanzarEstado = new JButton("Avanzar Estado");
         btnCancelarPedido = new JButton("Cancelar Pedido");
         btnFinalizarPartida = new JButton("Finalizar Partida");
         btnCerrarSesion = new JButton("Cerrar Sesion");
 
-        panelCentroArriba.add(btnIniciarPartida);
-        panelCentroArriba.add(new JLabel("Producto:"));
-        panelCentroArriba.add(cbProductos);
-        panelCentroArriba.add(btnGenerarPedido);
-        panelCentroArriba.add(btnAvanzarEstado);
-        panelCentroArriba.add(btnCancelarPedido);
-        panelCentroArriba.add(btnFinalizarPartida);
-        panelCentroArriba.add(btnCerrarSesion);
+        panelBotones.add(btnIniciarPartida);
+        panelBotones.add(btnAvanzarEstado);
+        panelBotones.add(btnCancelarPedido);
+        panelBotones.add(btnFinalizarPartida);
+        panelBotones.add(btnCerrarSesion);
 
-        add(panelCentroArriba, BorderLayout.SOUTH);
+        add(panelBotones, BorderLayout.SOUTH);
 
         modeloTabla = new DefaultTableModel();
         modeloTabla.addColumn("ID Pedido");
@@ -99,24 +101,11 @@ public class JugadorFrame extends JFrame {
         tablaPedidos = new JTable(modeloTabla);
         add(new JScrollPane(tablaPedidos), BorderLayout.CENTER);
 
-        cargarProductos();
-
         btnIniciarPartida.addActionListener(e -> iniciarPartida());
-        btnGenerarPedido.addActionListener(e -> generarPedido());
         btnAvanzarEstado.addActionListener(e -> avanzarEstadoPedido());
         btnCancelarPedido.addActionListener(e -> cancelarPedido());
         btnFinalizarPartida.addActionListener(e -> finalizarPartidaManual());
         btnCerrarSesion.addActionListener(e -> cerrarSesion());
-    }
-
-    private void cargarProductos() {
-        ProductoDAO productoDAO = new ProductoDAO();
-        ArrayList<Producto> productos = productoDAO.obtenerProductosActivosPorSucursal(usuario.getIdSucursal());
-
-        cbProductos.removeAllItems();
-        for (Producto producto : productos) {
-            cbProductos.addItem(producto);
-        }
     }
 
     private void iniciarPartida() {
@@ -140,7 +129,9 @@ public class JugadorFrame extends JFrame {
 
             actualizarEtiquetas();
             lblEstadoPartida.setText("Partida: En curso (ID " + idPartidaActual + ")");
+
             iniciarTimerPartida();
+            iniciarGeneracionAutomaticaPedidos();
 
             JOptionPane.showMessageDialog(this, "Partida iniciada correctamente");
         } else {
@@ -166,6 +157,71 @@ public class JugadorFrame extends JFrame {
         });
 
         timerPartida.start();
+    }
+
+    private void iniciarGeneracionAutomaticaPedidos() {
+        if (timerGeneracionPedidos != null && timerGeneracionPedidos.isRunning()) {
+            timerGeneracionPedidos.stop();
+        }
+
+        timerGeneracionPedidos = new Timer(INTERVALO_GENERACION_MS, e -> {
+            if (idPartidaActual == -1) {
+                return;
+            }
+
+            if (contarPedidosActivos() >= MAX_PEDIDOS_ACTIVOS) {
+                return;
+            }
+
+            generarPedidoAutomatico();
+        });
+
+        timerGeneracionPedidos.start();
+    }
+
+    private int contarPedidosActivos() {
+        int activos = 0;
+
+        for (int i = 0; i < modeloTabla.getRowCount(); i++) {
+            String estado = modeloTabla.getValueAt(i, 2).toString();
+
+            if (!esEstadoFinal(estado)) {
+                activos++;
+            }
+        }
+
+        return activos;
+    }
+
+    private void generarPedidoAutomatico() {
+        ProductoDAO productoDAO = new ProductoDAO();
+        ArrayList<Producto> productos = productoDAO.obtenerProductosActivosPorSucursal(usuario.getIdSucursal());
+
+        if (productos.isEmpty()) {
+            return;
+        }
+
+        Producto productoAleatorio = productos.get(random.nextInt(productos.size()));
+        int tiempo = obtenerTiempoPorNivel();
+
+        Pedido pedido = new Pedido();
+        pedido.setIdPartida(idPartidaActual);
+        pedido.setEstadoActual("RECIBIDA");
+        pedido.setTiempoLimiteSegundos(tiempo);
+        pedido.setTiempoRestanteSegundos(tiempo);
+
+        PedidoDAO pedidoDAO = new PedidoDAO();
+        int idPedido = pedidoDAO.insertarPedido(pedido, productoAleatorio.getIdProducto());
+
+        if (idPedido != -1) {
+            modeloTabla.addRow(new Object[]{
+                    idPedido,
+                    productoAleatorio.getNombre(),
+                    "RECIBIDA",
+                    tiempo,
+                    tiempo
+            });
+        }
     }
 
     private void actualizarTemporizadoresPedidos() {
@@ -198,43 +254,6 @@ public class JugadorFrame extends JFrame {
                     actualizarEtiquetas();
                 }
             }
-        }
-    }
-
-    private void generarPedido() {
-        if (idPartidaActual == -1) {
-            JOptionPane.showMessageDialog(this, "Primero debes iniciar una partida");
-            return;
-        }
-
-        Producto producto = (Producto) cbProductos.getSelectedItem();
-        if (producto == null) {
-            JOptionPane.showMessageDialog(this, "No hay productos disponibles en esta sucursal");
-            return;
-        }
-
-        int tiempo = obtenerTiempoPorNivel();
-
-        Pedido pedido = new Pedido();
-        pedido.setIdPartida(idPartidaActual);
-        pedido.setEstadoActual("RECIBIDA");
-        pedido.setTiempoLimiteSegundos(tiempo);
-        pedido.setTiempoRestanteSegundos(tiempo);
-
-        PedidoDAO pedidoDAO = new PedidoDAO();
-        int idPedido = pedidoDAO.insertarPedido(pedido, producto.getIdProducto());
-
-        if (idPedido != -1) {
-            modeloTabla.addRow(new Object[]{
-                    idPedido,
-                    producto.getNombre(),
-                    "RECIBIDA",
-                    tiempo,
-                    tiempo
-            });
-            JOptionPane.showMessageDialog(this, "Pedido generado correctamente");
-        } else {
-            JOptionPane.showMessageDialog(this, "Error al generar pedido");
         }
     }
 
@@ -329,10 +348,18 @@ public class JugadorFrame extends JFrame {
             timerPartida.stop();
         }
 
+        if (timerGeneracionPedidos != null && timerGeneracionPedidos.isRunning()) {
+            timerGeneracionPedidos.stop();
+        }
+
         finalizarPartidaEnBD("Partida finalizada");
     }
 
     private void finalizarPartidaAutomatica() {
+        if (timerGeneracionPedidos != null && timerGeneracionPedidos.isRunning()) {
+            timerGeneracionPedidos.stop();
+        }
+
         marcarPedidosPendientesComoNoEntregados();
         finalizarPartidaEnBD("Tiempo terminado. Partida finalizada automáticamente");
     }
@@ -361,48 +388,53 @@ public class JugadorFrame extends JFrame {
         actualizarEtiquetas();
     }
 
-private void finalizarPartidaEnBD(String mensaje) {
-    PartidaDAO partidaDAO = new PartidaDAO();
-    PuntajeDAO puntajeDAO = new PuntajeDAO();
-    NivelAlcanzadoDAO nivelDAO = new NivelAlcanzadoDAO();
+    private void finalizarPartidaEnBD(String mensaje) {
+        PartidaDAO partidaDAO = new PartidaDAO();
+        PuntajeDAO puntajeDAO = new PuntajeDAO();
+        NivelAlcanzadoDAO nivelDAO = new NivelAlcanzadoDAO();
 
-    boolean partidaFinalizada = partidaDAO.finalizarPartida(idPartidaActual);
-    boolean puntajeGuardado = puntajeDAO.guardarPuntaje(
-            idPartidaActual,
-            puntaje,
-            pedidosEntregados,
-            pedidosCancelados,
-            pedidosNoEntregados,
-            bonificaciones
-    );
-    boolean nivelGuardado = nivelDAO.guardarNivelAlcanzado(idPartidaActual, nivelActual);
-
-    if (partidaFinalizada && puntajeGuardado && nivelGuardado) {
-        JOptionPane.showMessageDialog(this, mensaje);
-
-        idPartidaActual = -1;
-        lblEstadoPartida.setText("Partida: No iniciada");
-        lblTiempoPartida.setText("Tiempo de partida: 180 s");
-
-        FinPartidaFrame finPartidaFrame = new FinPartidaFrame(
+        boolean partidaFinalizada = partidaDAO.finalizarPartida(idPartidaActual);
+        boolean puntajeGuardado = puntajeDAO.guardarPuntaje(
+                idPartidaActual,
                 puntaje,
                 pedidosEntregados,
                 pedidosCancelados,
                 pedidosNoEntregados,
-                bonificaciones,
-                nivelActual
+                bonificaciones
         );
-        finPartidaFrame.setVisible(true);
+        boolean nivelGuardado = nivelDAO.guardarNivelAlcanzado(idPartidaActual, nivelActual);
 
-    } else {
-        JOptionPane.showMessageDialog(this, "Hubo un problema al finalizar la partida");
+        if (partidaFinalizada && puntajeGuardado && nivelGuardado) {
+            JOptionPane.showMessageDialog(this, mensaje);
+
+            idPartidaActual = -1;
+            lblEstadoPartida.setText("Partida: No iniciada");
+            lblTiempoPartida.setText("Tiempo de partida: 180 s");
+
+            FinPartidaFrame finPartidaFrame = new FinPartidaFrame(
+                    puntaje,
+                    pedidosEntregados,
+                    pedidosCancelados,
+                    pedidosNoEntregados,
+                    bonificaciones,
+                    nivelActual
+            );
+            finPartidaFrame.setVisible(true);
+
+        } else {
+            JOptionPane.showMessageDialog(this, "Hubo un problema al finalizar la partida");
+        }
     }
-}
 
     private void cerrarSesion() {
         if (timerPartida != null && timerPartida.isRunning()) {
             timerPartida.stop();
         }
+
+        if (timerGeneracionPedidos != null && timerGeneracionPedidos.isRunning()) {
+            timerGeneracionPedidos.stop();
+        }
+
         dispose();
         new LoginFrame().setVisible(true);
     }

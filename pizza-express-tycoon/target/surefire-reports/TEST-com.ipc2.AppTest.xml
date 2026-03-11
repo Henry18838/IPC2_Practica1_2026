@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.ipc2.AppTest" time="0.126" tests="1" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" name="com.ipc2.AppTest" time="0.096" tests="1" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -15,7 +15,7 @@
     <property name="sun.java.launcher" value="SUN_STANDARD"/>
     <property name="user.country" value="419"/>
     <property name="sun.boot.library.path" value="C:\Program Files\Java\jdk-21\bin"/>
-    <property name="sun.java.command" value="C:\Users\Pablo\AppData\Local\Temp\surefire17715310102531018669\surefirebooter16571459853806576362.jar C:\Users\Pablo\AppData\Local\Temp\surefire17715310102531018669 2026-03-10T21-10-05_253-jvmRun1 surefire16007710425855577723tmp surefire_03622356240218732612tmp"/>
+    <property name="sun.java.command" value="C:\Users\Pablo\AppData\Local\Temp\surefire5768603315163597903\surefirebooter4414109077119724528.jar C:\Users\Pablo\AppData\Local\Temp\surefire5768603315163597903 2026-03-11T15-50-21_527-jvmRun1 surefire15939303719734401691tmp surefire_07014912909438397751tmp"/>
     <property name="jdk.debug" value="release"/>
     <property name="surefire.test.class.path" value="C:\Users\Pablo\OneDrive\Escritorio\Practica1_IPC2\pizza-express-tycoon\target\test-classes;C:\Users\Pablo\OneDrive\Escritorio\Practica1_IPC2\pizza-express-tycoon\target\classes;C:\Users\Pablo\.m2\repository\com\mysql\mysql-connector-j\8.4.0\mysql-connector-j-8.4.0.jar;C:\Users\Pablo\.m2\repository\com\google\protobuf\protobuf-java\3.25.1\protobuf-java-3.25.1.jar;C:\Users\Pablo\.m2\repository\com\formdev\flatlaf\3.4.1\flatlaf-3.4.1.jar;C:\Users\Pablo\.m2\repository\junit\junit\4.13.2\junit-4.13.2.jar;C:\Users\Pablo\.m2\repository\org\hamcrest\hamcrest-core\1.3\hamcrest-core-1.3.jar;"/>
     <property name="sun.cpu.endian" value="little"/>
@@ -30,7 +30,7 @@
     <property name="line.separator" value="&#10;"/>
     <property name="java.vm.specification.vendor" value="Oracle Corporation"/>
     <property name="java.specification.name" value="Java Platform API Specification"/>
-    <property name="surefire.real.class.path" value="C:\Users\Pablo\AppData\Local\Temp\surefire17715310102531018669\surefirebooter16571459853806576362.jar"/>
+    <property name="surefire.real.class.path" value="C:\Users\Pablo\AppData\Local\Temp\surefire5768603315163597903\surefirebooter4414109077119724528.jar"/>
     <property name="user.script" value=""/>
     <property name="sun.management.compiler" value="HotSpot 64-Bit Tiered Compilers"/>
     <property name="java.runtime.version" value="21.0.7+8-LTS-245"/>
@@ -58,5 +58,5 @@
     <property name="sun.io.unicode.encoding" value="UnicodeLittle"/>
     <property name="java.class.version" value="65.0"/>
   </properties>
-  <testcase name="shouldAnswerWithTrue" classname="com.ipc2.AppTest" time="0.009"/>
+  <testcase name="shouldAnswerWithTrue" classname="com.ipc2.AppTest" time="0.007"/>
 </testsuite>
